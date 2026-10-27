@@ -1,0 +1,467 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+  <title>The Driver Pro</title>
+
+  <!-- PWA Manifest & Themes -->
+  <link rel="manifest" href="manifest.json">
+  <meta name="theme-color" content="#060913">
+  <meta name="color-scheme" content="dark">
+
+  <!-- Apple iOS Mobile App Tags -->
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="Driver Pro">
+  <link rel="apple-touch-icon" href="apple-touch-icon.png">
+  <link rel="icon" type="image/png" href="favicon.png">
+
+  <!-- Google Font: Prompt & Kanit -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Kanit:wght@500;600;700&family=Prompt:wght@400;500;600&display=swap" rel="stylesheet">
+
+  <style>
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      -webkit-tap-highlight-color: transparent;
+    }
+
+    html, body {
+      width: 100%;
+      height: 100%;
+      height: 100dvh;
+      overflow: hidden;
+      background-color: #060913;
+      font-family: 'Prompt', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      color: #f8fafc;
+      position: fixed;
+    }
+
+    /* Fullscreen Web App Frame */
+    #appFrame {
+      width: 100%;
+      height: 100%;
+      height: 100dvh;
+      border: 0;
+      display: block;
+      background-color: #060913;
+      padding-top: env(safe-area-inset-top, 0);
+      padding-bottom: env(safe-area-inset-bottom, 0);
+    }
+
+    /* Splash Screen Loader */
+    #pwaSplash {
+      position: fixed;
+      inset: 0;
+      z-index: 9999;
+      background: radial-gradient(circle at 50% 30%, #0d1a33 0%, #060913 70%);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      transition: opacity 0.4s ease, visibility 0.4s ease;
+    }
+
+    #pwaSplash.fade-out {
+      opacity: 0;
+      visibility: hidden;
+      pointer-events: none;
+    }
+
+    .splash-icon-wrap {
+      position: relative;
+      width: 90px;
+      height: 90px;
+      margin-bottom: 20px;
+    }
+
+    .splash-icon {
+      width: 90px;
+      height: 90px;
+      border-radius: 24px;
+      box-shadow: 0 16px 36px -8px rgba(56, 189, 248, 0.4);
+      display: block;
+    }
+
+    .splash-ring {
+      position: absolute;
+      inset: -6px;
+      border-radius: 30px;
+      border: 2px solid transparent;
+      border-top-color: #38bdf8;
+      border-right-color: #38bdf8;
+      animation: spinRing 1.4s linear infinite;
+    }
+
+    @keyframes spinRing {
+      0% { transform: rotate(0deg); }
+      100% { transform: rotate(360deg); }
+    }
+
+    .splash-title {
+      font-family: 'Kanit', sans-serif;
+      font-size: 24px;
+      font-weight: 700;
+      color: #ffffff;
+      letter-spacing: -0.3px;
+      margin-bottom: 4px;
+    }
+
+    .splash-sub {
+      font-size: 13px;
+      color: #94a3b8;
+      font-weight: 400;
+    }
+
+    .splash-pulse-dots {
+      display: flex;
+      gap: 6px;
+      margin-top: 18px;
+    }
+
+    .splash-dot {
+      width: 7px;
+      height: 7px;
+      border-radius: 50%;
+      background: #38bdf8;
+      animation: dotPulse 1.2s infinite ease-in-out;
+    }
+
+    .splash-dot:nth-child(2) { animation-delay: 0.2s; }
+    .splash-dot:nth-child(3) { animation-delay: 0.4s; }
+
+    @keyframes dotPulse {
+      0%, 80%, 100% { transform: scale(0.6); opacity: 0.3; }
+      40% { transform: scale(1); opacity: 1; }
+    }
+
+    /* PWA Install Banner (Floating Bottom Bar) */
+    #installBanner {
+      position: fixed;
+      bottom: 20px;
+      left: 16px;
+      right: 16px;
+      max-width: 440px;
+      margin: 0 auto;
+      z-index: 999;
+      background: rgba(15, 23, 42, 0.92);
+      border: 1px solid rgba(56, 189, 248, 0.35);
+      border-radius: 20px;
+      padding: 12px 14px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      box-shadow: 0 20px 40px -10px rgba(0, 0, 0, 0.8), 0 0 25px rgba(56, 189, 248, 0.25);
+      backdrop-filter: blur(20px);
+      -webkit-backdrop-filter: blur(20px);
+      transform: translateY(120%);
+      transition: transform 0.35s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+
+    #installBanner.show {
+      transform: translateY(0);
+    }
+
+    .banner-left {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .banner-icon {
+      width: 38px;
+      height: 38px;
+      border-radius: 10px;
+      object-fit: cover;
+    }
+
+    .banner-text-title {
+      font-size: 13.5px;
+      font-weight: 600;
+      color: #ffffff;
+      line-height: 1.2;
+    }
+
+    .banner-text-sub {
+      font-size: 11.5px;
+      color: #94a3b8;
+      margin-top: 1px;
+    }
+
+    .banner-actions {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .btn-install {
+      background: linear-gradient(135deg, #0284c7 0%, #0ea5e9 100%);
+      color: #ffffff;
+      border: 0;
+      padding: 8px 14px;
+      border-radius: 12px;
+      font-family: inherit;
+      font-size: 12.5px;
+      font-weight: 600;
+      cursor: pointer;
+      box-shadow: 0 4px 14px rgba(14, 165, 233, 0.4);
+      white-space: nowrap;
+    }
+
+    .btn-close-banner {
+      background: transparent;
+      border: 0;
+      color: #94a3b8;
+      font-size: 18px;
+      padding: 4px;
+      cursor: pointer;
+      display: grid;
+      place-items: center;
+    }
+
+    /* iOS Install Modal */
+    #iosGuideModal {
+      display: none;
+      position: fixed;
+      inset: 0;
+      z-index: 10000;
+      background: rgba(3, 7, 18, 0.85);
+      backdrop-filter: blur(16px);
+      -webkit-backdrop-filter: blur(16px);
+      padding: 20px;
+      align-items: flex-end;
+      justify-content: center;
+    }
+
+    #iosGuideModal.show {
+      display: flex;
+    }
+
+    .ios-box {
+      width: 100%;
+      max-width: 380px;
+      background: #111c34;
+      border: 1px solid rgba(56, 189, 248, 0.35);
+      border-radius: 24px;
+      padding: 22px 20px;
+      text-align: center;
+      margin-bottom: 20px;
+      box-shadow: 0 25px 50px rgba(0, 0, 0, 0.8);
+      position: relative;
+    }
+
+    .ios-box::after {
+      content: "";
+      position: absolute;
+      bottom: -10px;
+      left: 50%;
+      transform: translateX(-50%);
+      border-width: 10px 10px 0 10px;
+      border-style: solid;
+      border-color: #111c34 transparent transparent transparent;
+    }
+
+    .ios-title {
+      font-size: 17px;
+      font-weight: 700;
+      color: #ffffff;
+      margin-bottom: 12px;
+    }
+
+    .ios-step {
+      font-size: 13.5px;
+      color: #cbd5e1;
+      line-height: 1.6;
+      margin: 8px 0;
+      text-align: left;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .ios-step-badge {
+      width: 24px;
+      height: 24px;
+      border-radius: 50%;
+      background: #0284c7;
+      color: #ffffff;
+      font-size: 12px;
+      font-weight: 700;
+      display: grid;
+      place-items: center;
+      flex-shrink: 0;
+    }
+
+    .ios-icon-svg {
+      display: inline-block;
+      vertical-align: middle;
+      color: #38bdf8;
+    }
+
+    .btn-ios-close {
+      width: 100%;
+      margin-top: 14px;
+      padding: 10px;
+      border-radius: 12px;
+      border: 0;
+      background: rgba(255, 255, 255, 0.1);
+      color: #ffffff;
+      font-family: inherit;
+      font-size: 13.5px;
+      font-weight: 600;
+      cursor: pointer;
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Splash Screen -->
+  <div id="pwaSplash">
+    <div class="splash-icon-wrap">
+      <img src="icon-192.png" alt="Driver Pro" class="splash-icon">
+      <div class="splash-ring"></div>
+    </div>
+    <div class="splash-title">The Driver Pro</div>
+    <div class="splash-sub">ระบบจัดการรายได้รถ & บัญชีร้าน</div>
+    <div class="splash-pulse-dots">
+      <div class="splash-dot"></div>
+      <div class="splash-dot"></div>
+      <div class="splash-dot"></div>
+    </div>
+  </div>
+
+  <!-- Fullscreen Web App iFrame -->
+  <iframe
+    id="appFrame"
+    src="https://script.google.com/macros/s/AKfycbwrj5CmWxBUb5RAgL6jTh4jGHdaEeswjQE6RUNwYhkyyoPlcveMRx33usebUlGB-lpH/exec"
+    allow="camera; microphone; geolocation"
+    sandbox="allow-top-navigation allow-scripts allow-same-origin allow-forms allow-popups allow-modals">
+  </iframe>
+
+  <!-- Install Banner for Android & iOS -->
+  <div id="installBanner">
+    <div class="banner-left">
+      <img src="icon-192.png" alt="Driver Pro" class="banner-icon">
+      <div>
+        <div class="banner-text-title">ติดตั้ง The Driver Pro</div>
+        <div class="banner-text-sub" id="bannerSubText">แตะเพื่อติดตั้งลงบนหน้าจอมือถือ</div>
+      </div>
+    </div>
+    <div class="banner-actions">
+      <button id="btnInstallApp" class="btn-install">ติดตั้งแอป</button>
+      <button id="btnCloseBanner" class="btn-close-banner">✕</button>
+    </div>
+  </div>
+
+  <!-- iOS Step-by-Step Guide Modal -->
+  <div id="iosGuideModal">
+    <div class="ios-box">
+      <div class="ios-title">วิธีติดตั้งแอปบน iPhone (iOS)</div>
+      <div class="ios-step">
+        <span class="ios-step-badge">1</span>
+        <span>แตะปุ่ม <b>แชร์ (Share)</b>
+          <svg class="ios-icon-svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8"/><polyline points="16 6 12 2 8 6"/><line x1="12" y1="2" x2="12" y2="15"/></svg>
+          แถบด้านล่างของ Safari
+        </span>
+      </div>
+      <div class="ios-step">
+        <span class="ios-step-badge">2</span>
+        <span>เลื่อนลงมาเลือก <b>"เพิ่มไปยังหน้าจอโฮม"</b> (Add to Home Screen)</span>
+      </div>
+      <div class="ios-step">
+        <span class="ios-step-badge">3</span>
+        <span>กด <b>"เพิ่ม"</b> (Add) ที่มุมขวาบน จะได้ไอคอนแอปทันที!</span>
+      </div>
+      <button class="btn-ios-close" onclick="closeIosModal()">รับทราบ</button>
+    </div>
+  </div>
+
+  <script>
+    // 1. Hide splash screen when iframe is loaded
+    const appFrame = document.getElementById("appFrame");
+    const pwaSplash = document.getElementById("pwaSplash");
+
+    appFrame.onload = function() {
+      setTimeout(() => {
+        pwaSplash.classList.add("fade-out");
+      }, 500);
+    };
+
+    // Safety timeout in case onload triggers early or slow network
+    setTimeout(() => {
+      pwaSplash.classList.add("fade-out");
+    }, 4500);
+
+    // 2. Check if already installed & running standalone
+    const isStandalone = window.matchMedia("(display-mode: standalone)").matches || window.navigator.standalone === true;
+
+    // 3. PWA Installation Handler
+    let deferredPrompt = null;
+    const banner = document.getElementById("installBanner");
+    const btnInstall = document.getElementById("btnInstallApp");
+    const btnClose = document.getElementById("btnCloseBanner");
+    const bannerSub = document.getElementById("bannerSubText");
+    const iosModal = document.getElementById("iosGuideModal");
+
+    // Detect platform
+    const isIos = /iphone|ipad|ipod/.test(window.navigator.userAgent.toLowerCase());
+
+    if (!isStandalone) {
+      if (isIos) {
+        // Show iOS install helper
+        setTimeout(() => {
+          bannerSub.innerText = "ติดตั้งไว้บนหน้าจอโฮมเพื่อความสะดวก";
+          banner.classList.add("show");
+        }, 1500);
+
+        btnInstall.onclick = function() {
+          banner.classList.remove("show");
+          iosModal.classList.add("show");
+        };
+      } else {
+        // Android / Desktop Chrome beforeinstallprompt
+        window.addEventListener("beforeinstallprompt", (e) => {
+          e.preventDefault();
+          deferredPrompt = e;
+          setTimeout(() => {
+            banner.classList.add("show");
+          }, 1200);
+        });
+
+        btnInstall.onclick = async function() {
+          if (deferredPrompt) {
+            deferredPrompt.prompt();
+            const { outcome } = await deferredPrompt.userChoice;
+            deferredPrompt = null;
+            banner.classList.remove("show");
+          } else {
+            alert("แตะที่จุด 3 จุดมุมขวาบนของเบราว์เซอร์ แล้วเลือก 'ติดตั้งแอป' (Install App)");
+          }
+        };
+      }
+    }
+
+    btnClose.onclick = function() {
+      banner.classList.remove("show");
+    };
+
+    function closeIosModal() {
+      iosModal.classList.remove("show");
+    }
+
+    // 4. Register Service Worker
+    if ("serviceWorker" in navigator) {
+      window.addEventListener("load", () => {
+        navigator.serviceWorker.register("./sw.js")
+          .then((reg) => console.log("PWA SW registered", reg.scope))
+          .catch((err) => console.log("PWA SW failed", err));
+      });
+    }
+  </script>
+</body>
+</html>
